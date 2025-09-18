@@ -133,4 +133,6 @@ int main(void) {
 	printf("시작 시간: %6ld(ms)\n", start);
 	printf("종료 시간: %6ld(ms)\n", finish);
 	printf("소요 시간: %6ld(ms)\n", finish - start); 
+	
+//commit test;
 }
