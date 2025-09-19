@@ -19,14 +19,14 @@ typedef struct {
 CharArrayWrapper InputArray1;
 CharArrayWrapper InputArray2;
 
-int stringCompare(CharArrayWrapper* InputArray, Substring* String, Substring* ProtoString) {
-	if (String->length>ProtoString->length && String->length>0) {
+int compareString(Substring* String, Substring* ProtoString) {
+	if (String->length > ProtoString->length && String->length > 0) {
 		return 1;
 	}
-	else if(String->length==ProtoString->length && String->length>0) {
+	else if(String->length == ProtoString->length && String->length > 0) {
 		int i;
 		for(i=0;i<String->length;i++) {
-			if(InputArray->array[String->cursor+i]<InputArray->array[ProtoString->cursor+i]) {
+			if(String->target->array[String->cursor+i] < ProtoString->target->array[ProtoString->cursor+i]) {
 				return 1;
 			}
 		}
@@ -97,16 +97,23 @@ Substring beta_searchMain() {
 		for(j=cursor+1;j<InputArray1.length;j++) {
 			if (InputArray1.array[cursor] == InputArray1.array[j] && 
 			(cursor == 0 || InputArray1.array[cursor-1] != InputArray1.array[j-1])) {//cursor의 문자와 동일 문자 발견 
+				printf("(beta_searchMain)method; found cursor %d:%d\n", cursor, j);
 				int cursorGap = j-cursor;
 				int i;
+				
 				for(i=0;i+cursorGap<InputArray2.length;i++) {
 					if (InputArray2.array[i] == InputArray1.array[cursor] && 
 						InputArray2.array[i+cursorGap] == InputArray1.array[cursor]) {
 						//cursor 4개 획득. 탐색 함수 호출 
+						printf("  array2 cursor %d:%d\n", i, i+cursorGap);
 						Substring nowString = beta_search(cursor, i, j-cursor);
-						printf("(alpha_searchMain) cursor: %d | methodnowString : %d:%c %d\n",cursor, nowString.cursor, nowString.target->array[nowString.cursor], nowString.length);
+						
+						if (compareString(&nowString, &top)) {
+							top = nowString;
+						}
 					}
 				}
+				printf("\n");
 			}
 		}
 	}
@@ -135,7 +142,7 @@ int main(void) {
 //	printf("result : %d %d\n",alpha_search(&inputArray1,&inputArray2,0,0,3));
 //	printf("compare at 0|3 : %d\n", alpha_search(&inputArray1,&inputArray2,0,3).length);
 	Substring a = beta_searchMain();
-	
+	printf("result : %d:%c | %d\n",a.cursor, a.target->array[a.cursor], a.length);
 	printf("\n");
 	
 	finish = clock();
