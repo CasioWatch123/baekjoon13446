@@ -1,15 +1,9 @@
 #include<stdio.h>
 #include<time.h>
-//char InputArray[48] = {};
-//int InputLength;
-//int LengthCount = 0;
-//int LengthTopCursor = -1;
-int ForCount = 0;
 
-typedef struct {
-	int* array;
-	int length;
-}IntArrayWrapper;
+#define STANDARD_ARRAY InputArray1
+
+
 
 typedef struct {
 	char* array;
@@ -17,11 +11,13 @@ typedef struct {
 }CharArrayWrapper;
 
 typedef struct {
+	CharArrayWrapper* target;
 	int cursor;
 	int length;
 }Substring;
 
-
+CharArrayWrapper InputArray1;
+CharArrayWrapper InputArray2;
 
 int stringCompare(CharArrayWrapper* InputArray, Substring* String, Substring* ProtoString) {
 	if (String->length>ProtoString->length && String->length>0) {
@@ -42,65 +38,79 @@ int stringCompare(CharArrayWrapper* InputArray, Substring* String, Substring* Pr
 
 
 
-void alpha_search(CharArrayWrapper* InputArray1, CharArrayWrapper* InputArray2, int FrontCursor, int CursorGap) {
+Substring beta_search(int Cursor1, int Cursor2, int CursorGap) {
+	int maxLength;
+	//
+	for(maxLength=1; ;maxLength++) {
+		if (!( Cursor1+CursorGap+maxLength < InputArray1.length ) || 
+			!( Cursor2+CursorGap+maxLength < InputArray2.length ) ||
+			 !( InputArray1.array[Cursor1+maxLength] == InputArray1.array[Cursor1+CursorGap+maxLength] ) ||
+			 !( InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+maxLength] ) ||
+			 !( InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+CursorGap+maxLength]) ) {
+			break;
+		}
+		//debug
+//		if (!(Cursor1+CursorGap+maxLength < InputArray1.length)) {
+//			printf("case 1\n");
+//			break;
+//		}
+//		if (!(Cursor2+CursorGap+maxLength < InputArray2.length)) {
+//			printf("case 2\n");
+//			break;
+//		}
+//		if (!(InputArray1.array[Cursor1+maxLength] == InputArray1.array[Cursor1+CursorGap+maxLength])) {
+//			printf("case 3\n");
+//			break;
+//		}
+//		if (!(InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+maxLength])) {
+//			printf("case 4\n");
+//			break;
+//		}
+//		if (!(InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+CursorGap+maxLength])) {
+//			printf("case 5\n");
+//			break;
+//		}
+	}
 	
-	Substring resultString = {-1,0};
 	
-	//InputArray1에서 부분문자열 길이 계산 
-	int maxLength1;
+	//middle substring 비교 후 boolean return
 	
-	for(maxLength1=1;
-		 FrontCursor+CursorGap+maxLength1<InputArray1->length &&
-		 maxLength1<CursorGap && 
-		 InputArray1->array[FrontCursor+maxLength1]==InputArray1->array[FrontCursor+CursorGap+maxLength1];
-		maxLength1++);
-//	maxLength++;
-	
-	
-	//InputArray2에서 부분문자열(길이) 탐색
 	int i;
-	int maxLength2=0;
-	int cursor=-1;
-	
-	for(i=0;i<InputArray2->length-CursorGap;i++) {
-		if (InputArray2->array[i] == InputArray1->array[FrontCursor] && 
-			InputArray2->array[i] == InputArray2->array[i+CursorGap]) {
-			int j;
-			for(j=1;
-				 i+CursorGap+j<InputArray2->length && 
-				 j<CursorGap && 
-				 InputArray2->array[i+j] == InputArray2->array[i+CursorGap+j];
-				j++);
-			if (j>maxLength2) {
-				maxLength2 = j;
-				cursor = i;
-			}
+	Substring result = {&STANDARD_ARRAY, -1, -1};
+	for(i=0;i<CursorGap-maxLength;i++) {
+		if(InputArray1.array[Cursor1+i+1] != InputArray2.array[Cursor2+i+1]) {
+			return result;
 		}
 	}
 	
-	int maxLength = maxLength1>maxLength2 ? maxLength1:maxLength2;
-	//탐색 값 기반 메인 로직 
-	
-	printf("mL1 %d\n",maxLength1);
-	printf("mL2 %d\n",maxLength2);
+	result.cursor = Cursor1;
+	result.length = CursorGap + maxLength;
+	return result;
 }
 
-void alpha_searchMain(CharArrayWrapper* InputArray1, CharArrayWrapper* InputArray2, Substring* TopLengthSubstring) {
+Substring beta_searchMain() {
+	Substring top = {&STANDARD_ARRAY, 0,0};
+	
 	int cursor, j;
-	for(cursor=0;cursor<InputArray1->length-1;cursor++) {
-		for(j=cursor+1;j<InputArray1->length;j++) {
-			if (InputArray1->array[cursor] == InputArray1->array[j] && 
-			(cursor == 0 || InputArray1->array[cursor-1] != InputArray1->array[j-1])) {//cursor의 문자와 동일 문자 발견 
-				Substring nowSubstring = {-1, -1};
-//				alpha_search();//메인 탐색 로직 
-				
-				if (stringCompare(InputArray1, &nowSubstring, TopLengthSubstring)) {
-					TopLengthSubstring->cursor = nowSubstring.cursor;
-					TopLengthSubstring->length = nowSubstring.length;
+	
+	for(cursor=0;cursor<InputArray1.length-1;cursor++) {
+		for(j=cursor+1;j<InputArray1.length;j++) {
+			if (InputArray1.array[cursor] == InputArray1.array[j] && 
+			(cursor == 0 || InputArray1.array[cursor-1] != InputArray1.array[j-1])) {//cursor의 문자와 동일 문자 발견 
+				int cursorGap = j-cursor;
+				int i;
+				for(i=0;i+cursorGap<InputArray2.length;i++) {
+					if (InputArray2.array[i] == InputArray1.array[cursor] && 
+						InputArray2.array[i+cursorGap] == InputArray1.array[cursor]) {
+						//cursor 4개 획득. 탐색 함수 호출 
+						Substring nowString = beta_search(cursor, i, j-cursor);
+						printf("(alpha_searchMain) cursor: %d | methodnowString : %d:%c %d\n",cursor, nowString.cursor, nowString.target->array[nowString.cursor], nowString.length);
+					}
 				}
 			}
 		}
 	}
+	return top;
 }
 int main(void) {
 	long start, finish;
@@ -110,21 +120,21 @@ int main(void) {
 	
 	scanf("%47s %47s",array1,array2);
 	
-	CharArrayWrapper inputArray1 = {array1};
-	CharArrayWrapper inputArray2 = {array2};
+	InputArray1.array = array1;
+	InputArray2.array = array2;
 
 	int i;
-	for(i=0;inputArray1.array[i];i++);
-	inputArray1.length = i;
+	for(i=0;InputArray1.array[i];i++);
+	InputArray1.length = i;
 	
-	for(i=0;inputArray2.array[i];i++);
-	inputArray2.length = i;
+	for(i=0;InputArray2.array[i];i++);
+	InputArray2.length = i;
 	
 	start = clock();
 	//main method block
-	alpha_search(&inputArray1,&inputArray2,0,3);
+//	printf("result : %d %d\n",alpha_search(&inputArray1,&inputArray2,0,0,3));
 //	printf("compare at 0|3 : %d\n", alpha_search(&inputArray1,&inputArray2,0,3).length);
-	
+	Substring a = beta_searchMain();
 	
 	printf("\n");
 	
