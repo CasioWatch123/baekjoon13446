@@ -45,7 +45,7 @@ Substring alpha_count(CharArrayWrapper* InputArray, int Cursor1, int Cursor2) {
 	count < Cursor2-Cursor1 && 
 	InputArray->array[Cursor1+count] == InputArray->array[Cursor2+count];
 	count++);
-	printf("(alpha_count)method count : %d\n", count);
+//	printf("(alpha_count)method count : %d\n", count);//debug
 	
 	Substring result = {InputArray, Cursor1, count};
 	
@@ -65,7 +65,7 @@ Substring alpha_searchMain() {
 			InputArray1.array[cursor] == InputArray1.array[j] &&
 			(cursor == 0 || InputArray1.array[cursor-1] != InputArray1.array[j-1])) {
 				//커서 두 개 획득. 탐색 함수 호출 
-				Substring nowString = alpha_count(&InputArray1, cursor, j);//구현 후 수정 필요 
+				Substring nowString = alpha_count(&InputArray1, cursor, j);
 				
 				if(compareString(&nowString, &string1)) {
 					string1 = nowString;
@@ -83,7 +83,7 @@ Substring alpha_searchMain() {
 			InputArray2.array[cursor] == InputArray2.array[j] && 
 			(cursor == 0 || InputArray2.array[cursor-1] != InputArray2.array[j-1])) {
 				//커서 두 개 획득. 탐색 함수 호출
-				Substring nowString = alpha_count(&InputArray2, cursor, j);//구현 후 수정 필요 
+				Substring nowString = alpha_count(&InputArray2, cursor, j);
 				
 				if(compareString(&nowString, &string2)) {
 					string2 = nowString;
@@ -92,7 +92,7 @@ Substring alpha_searchMain() {
 		}
 	}
 	
-	//merge/return
+	// merge/return
 	if (string1.target == NULL || string2.target == NULL) {
 		Substring nullString = {NULL, 0, 0};
 		return nullString;
@@ -184,7 +184,7 @@ Substring beta_searchMain() {
 			if (
 			InputArray1.array[cursor] == InputArray1.array[j] && 
 			(cursor == 0 || InputArray1.array[cursor-1] != InputArray1.array[j-1])) {//cursor의 문자와 동일 문자 발견 
-				printf("(beta_searchMain)method; found cursor %d:%d\n", cursor, j);
+//				printf("(beta_searchMain)method; found cursor %d:%d\n", cursor, j);//debug
 				int cursorGap = j-cursor;
 				int i;
 				
@@ -193,7 +193,7 @@ Substring beta_searchMain() {
 					InputArray2.array[i] == InputArray1.array[cursor] && 
 					InputArray2.array[i+cursorGap] == InputArray1.array[cursor]) {
 						//cursor 4개 획득. 탐색 함수 호출 
-						printf("  array2 cursor %d:%d\n", i, i+cursorGap);
+//						printf("  array2 cursor %d:%d\n", i, i+cursorGap);//debug
 						Substring nowString = beta_count(cursor, i, j-cursor);
 						
 						if (compareString(&nowString, &top)) {
@@ -201,7 +201,7 @@ Substring beta_searchMain() {
 						}
 					}
 				}
-				printf("\n");
+//				printf("\n");//debug
 			}
 		}
 	}
@@ -229,20 +229,34 @@ int main(void) {
 	
 	start = clock();
 	//main method block
-//	printf("result : %d %d\n",alpha_search(&inputArray1,&inputArray2,0,0,3));
-//	printf("compare at 0|3 : %d\n", alpha_search(&inputArray1,&inputArray2,0,3).length);
-//	Substring a = beta_searchMain();
-//	printf("result : %d:%c | %d\n",a.cursor, a.target->array[a.cursor], a.length);
-//	printf("\n");
-//	
-	Substring a = alpha_searchMain();
-	printf("arguments : %d|%d\n", a.cursor, a.length);
 	
-	for(i=0;i<a.length;i++) {
-		printf("%c", a.target->array[a.cursor+i]);
+	Substring a = alpha_searchMain();
+	Substring b = beta_searchMain();
+	Substring resultString;
+	
+	if (a.target != NULL && b.target != NULL) {
+		if (compareString(&a, &b)) {
+			resultString = a;
+		}
+		else {
+			resultString = b;
+		}
+		
+//		printf("top length : %d\n", resultString.length);//debug
+		
+		for(i=0;i<resultString.length;i++) {
+			printf("%c", resultString.target->array[resultString.cursor+i]);
+		}
+	}
+	else {
+		printf("-1\n");
 	}
 	
-	printf("\n\n");
+	
+	
+	
+	
+//	printf("\n\n");
 	
 	
 	if (a.target != NULL) {
@@ -250,10 +264,9 @@ int main(void) {
 		free(a.target);
 	}
 	finish = clock();
-	
-	printf("시작 시간: %6ld(ms)\n", start);
-	printf("종료 시간: %6ld(ms)\n", finish);
-	printf("소요 시간: %6ld(ms)\n", finish - start); 
-	//alpha_searchMain 호출 시 반환값 Substring.target free 필요 
-//commit test;
+	//debug
+//	printf("\n");
+//	printf("시작 시간: %6ld(ms)\n", start);
+//	printf("종료 시간: %6ld(ms)\n", finish);
+//	printf("소요 시간: %6ld(ms)\n", finish - start); 
 }
