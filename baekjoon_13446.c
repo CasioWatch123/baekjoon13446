@@ -1,8 +1,8 @@
 #include<stdio.h>
+#include<stdlib.h>
 #include<time.h>
 
 #define STANDARD_ARRAY InputArray1
-
 
 
 typedef struct {
@@ -20,10 +20,10 @@ CharArrayWrapper InputArray1;
 CharArrayWrapper InputArray2;
 
 int compareString(Substring* String, Substring* ProtoString) {
-	if (String->length > ProtoString->length && String->length > 0) {
+	if (String->target != NULL && String->length > ProtoString->length) {
 		return 1;
 	}
-	else if(String->length == ProtoString->length && String->length > 0) {
+	else if(String->target != NULL && String->length == ProtoString->length) {
 		int i;
 		for(i=0;i<String->length;i++) {
 			if(String->target->array[String->cursor+i] < ProtoString->target->array[ProtoString->cursor+i]) {
@@ -31,22 +31,107 @@ int compareString(Substring* String, Substring* ProtoString) {
 			}
 		}
 	}
-	return 0;	
+	return 0;
 }
 
 
 
 
+Substring alpha_count(CharArrayWrapper* InputArray, int Cursor1, int Cursor2) {
+	int count;
+	
+	for(count=1;
+	Cursor2+count < InputArray->length && 
+	count < Cursor2-Cursor1 && 
+	InputArray->array[Cursor1+count] == InputArray->array[Cursor2+count];
+	count++);
+	printf("(alpha_count)method count : %d\n", count);
+	
+	Substring result = {InputArray, Cursor1, count};
+	
+	return result;
+}
 
-Substring beta_search(int Cursor1, int Cursor2, int CursorGap) {
+Substring alpha_searchMain() {
+	int cursor, j;
+	
+	
+	//InputArray1
+	Substring string1 = {NULL, 0, 0};
+	
+	for(cursor=0;cursor<InputArray1.length-1;cursor++) {
+		for(j=cursor+1;j<InputArray1.length;j++) {
+			if (
+			InputArray1.array[cursor] == InputArray1.array[j] &&
+			(cursor == 0 || InputArray1.array[cursor-1] != InputArray1.array[j-1])) {
+				//커서 두 개 획득. 탐색 함수 호출 
+				Substring nowString = alpha_count(&InputArray1, cursor, j);//구현 후 수정 필요 
+				
+				if(compareString(&nowString, &string1)) {
+					string1 = nowString;
+				}
+			}
+		}
+	}
+	
+	//InputArray2
+	Substring string2 = {NULL, 0, 0};
+	
+	for(cursor=0;cursor<InputArray2.length-1;cursor++) {
+		for(j=cursor+1;j<InputArray2.length;j++) {
+			if (
+			InputArray2.array[cursor] == InputArray2.array[j] && 
+			(cursor == 0 || InputArray2.array[cursor-1] != InputArray2.array[j-1])) {
+				//커서 두 개 획득. 탐색 함수 호출
+				Substring nowString = alpha_count(&InputArray2, cursor, j);//구현 후 수정 필요 
+				
+				if(compareString(&nowString, &string2)) {
+					string2 = nowString;
+				} 
+			}
+		}
+	}
+	
+	//merge/return
+	if (string1.target == NULL || string2.target == NULL) {
+		Substring nullString = {NULL, 0, 0};
+		return nullString;
+	}
+	
+	//병합된 서브스트링 구성 
+	int length = string1.length + string2.length;
+	
+	char* array = (char*)malloc(sizeof(char) * length);
+	
+	int i;
+	for(i=0;i<string1.length;i++) {
+		array[i] = string1.target->array[string1.cursor+i];
+	}
+	for(i=0;i<string2.length;i++) {
+		array[string1.length+i] = string2.target->array[string2.cursor+i];
+	}
+	
+	
+	CharArrayWrapper* wrapper = (CharArrayWrapper*)malloc(sizeof(CharArrayWrapper));
+	wrapper->array = array;
+	wrapper->length = length;
+	Substring result = {wrapper, 0, length};
+	
+	return result;
+}
+
+
+
+Substring beta_count(int Cursor1, int Cursor2, int CursorGap) {
 	int maxLength;
 	//
 	for(maxLength=1; ;maxLength++) {
-		if (!( Cursor1+CursorGap+maxLength < InputArray1.length ) || 
-			!( Cursor2+CursorGap+maxLength < InputArray2.length ) ||
-			 !( InputArray1.array[Cursor1+maxLength] == InputArray1.array[Cursor1+CursorGap+maxLength] ) ||
-			 !( InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+maxLength] ) ||
-			 !( InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+CursorGap+maxLength]) ) {
+		if (
+		!( Cursor1+CursorGap+maxLength < InputArray1.length ) || 
+		!( Cursor2+CursorGap+maxLength < InputArray2.length ) ||
+		 !( InputArray1.array[Cursor1+maxLength] == InputArray1.array[Cursor1+CursorGap+maxLength] ) ||
+		 !( InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+maxLength] ) ||
+		 !( InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+CursorGap+maxLength]) ) {
 			break;
 		}
 		//debug
@@ -76,13 +161,14 @@ Substring beta_search(int Cursor1, int Cursor2, int CursorGap) {
 	//middle substring 비교 후 boolean return
 	
 	int i;
-	Substring result = {&STANDARD_ARRAY, -1, -1};
+	Substring result = {NULL, 0, 0};
 	for(i=0;i<CursorGap-maxLength;i++) {
 		if(InputArray1.array[Cursor1+i+1] != InputArray2.array[Cursor2+i+1]) {
 			return result;
 		}
 	}
 	
+	result.target = &STANDARD_ARRAY;
 	result.cursor = Cursor1;
 	result.length = CursorGap + maxLength;
 	return result;
@@ -95,18 +181,20 @@ Substring beta_searchMain() {
 	
 	for(cursor=0;cursor<InputArray1.length-1;cursor++) {
 		for(j=cursor+1;j<InputArray1.length;j++) {
-			if (InputArray1.array[cursor] == InputArray1.array[j] && 
+			if (
+			InputArray1.array[cursor] == InputArray1.array[j] && 
 			(cursor == 0 || InputArray1.array[cursor-1] != InputArray1.array[j-1])) {//cursor의 문자와 동일 문자 발견 
 				printf("(beta_searchMain)method; found cursor %d:%d\n", cursor, j);
 				int cursorGap = j-cursor;
 				int i;
 				
 				for(i=0;i+cursorGap<InputArray2.length;i++) {
-					if (InputArray2.array[i] == InputArray1.array[cursor] && 
-						InputArray2.array[i+cursorGap] == InputArray1.array[cursor]) {
+					if (
+					InputArray2.array[i] == InputArray1.array[cursor] && 
+					InputArray2.array[i+cursorGap] == InputArray1.array[cursor]) {
 						//cursor 4개 획득. 탐색 함수 호출 
 						printf("  array2 cursor %d:%d\n", i, i+cursorGap);
-						Substring nowString = beta_search(cursor, i, j-cursor);
+						Substring nowString = beta_count(cursor, i, j-cursor);
 						
 						if (compareString(&nowString, &top)) {
 							top = nowString;
@@ -119,6 +207,8 @@ Substring beta_searchMain() {
 	}
 	return top;
 }
+
+
 int main(void) {
 	long start, finish;
 
@@ -141,15 +231,29 @@ int main(void) {
 	//main method block
 //	printf("result : %d %d\n",alpha_search(&inputArray1,&inputArray2,0,0,3));
 //	printf("compare at 0|3 : %d\n", alpha_search(&inputArray1,&inputArray2,0,3).length);
-	Substring a = beta_searchMain();
-	printf("result : %d:%c | %d\n",a.cursor, a.target->array[a.cursor], a.length);
-	printf("\n");
+//	Substring a = beta_searchMain();
+//	printf("result : %d:%c | %d\n",a.cursor, a.target->array[a.cursor], a.length);
+//	printf("\n");
+//	
+	Substring a = alpha_searchMain();
+	printf("arguments : %d|%d\n", a.cursor, a.length);
 	
+	for(i=0;i<a.length;i++) {
+		printf("%c", a.target->array[a.cursor+i]);
+	}
+	
+	printf("\n\n");
+	
+	
+	if (a.target != NULL) {
+		free(a.target->array);
+		free(a.target);
+	}
 	finish = clock();
 	
 	printf("시작 시간: %6ld(ms)\n", start);
 	printf("종료 시간: %6ld(ms)\n", finish);
 	printf("소요 시간: %6ld(ms)\n", finish - start); 
-	
+	//alpha_searchMain 호출 시 반환값 Substring.target free 필요 
 //commit test;
 }
