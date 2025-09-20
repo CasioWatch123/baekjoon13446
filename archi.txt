@@ -1,0 +1,32 @@
+a+c = b+d
+
+case length(a)>length(b):
+	a = alpha+gamma
+	b = alpha
+	
+	c = beta
+	d = gamma+beta
+
+	a+c = (alpha+gamma) + beta
+	b+d = alpha + (gamma+beta)
+
+		string aspect: ~alpha-gamma~alpha~, ~beta~gamma-beta~
+
+case length(a)<length(b):
+	a = alpha
+	b = alpha+gamma
+
+	c = gamma+beta
+	d = beta
+	
+	a+c = alpha + (gamma+beta)
+	b+d = (alpha+gamma) + beta
+		string aspect: ~alpha~alpha-gamma~, ~gamma-beta~beta~
+
+case length(a)==length(b):
+	a = alpha
+	b = alpha
+	
+	c = beta
+	d = beta
+		string aspect: ~alpha~alpha~, ~beta~beta~
