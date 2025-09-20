@@ -21,16 +21,23 @@ CharArrayWrapper InputArray2;
 
 int compareString(Substring* String, Substring* ProtoString) {
 	if (String->target != NULL && String->length > ProtoString->length) {
+//		printf("(compareString)method, return type 1\n"); //debug
 		return 1;
 	}
 	else if(String->target != NULL && String->length == ProtoString->length) {
 		int i;
-		for(i=0;i<String->length;i++) {
-			if(String->target->array[String->cursor+i] < ProtoString->target->array[ProtoString->cursor+i]) {
+		for(i=1;i<String->length;i++) {
+			if (String->target->array[String->cursor+i] < ProtoString->target->array[ProtoString->cursor+i]) {
+//				printf("(compareString)method, return type 2\n"); //debug
 				return 1;
+			}
+			if (String->target->array[String->cursor+i] > ProtoString->target->array[ProtoString->cursor+i]) {
+//				printf("(compareString)method, return type 3\n"); //debug
+				return 0;
 			}
 		}
 	}
+//	printf("(compareString)method, return type 4\n");
 	return 0;
 }
 
@@ -65,6 +72,7 @@ Substring alpha_searchMain() {
 			InputArray1.array[cursor] == InputArray1.array[j] &&
 			(cursor == 0 || InputArray1.array[cursor-1] != InputArray1.array[j-1])) {
 				//Ä¿¼­ µÎ °³ È¹µæ. Å½»ö ÇÔ¼ö È£Ãâ 
+//				printf("(alpha_searchMain)method call compareString 1\n"); //debug
 				Substring nowString = alpha_count(&InputArray1, cursor, j);
 				
 				if(compareString(&nowString, &string1)) {
@@ -83,6 +91,8 @@ Substring alpha_searchMain() {
 			InputArray2.array[cursor] == InputArray2.array[j] && 
 			(cursor == 0 || InputArray2.array[cursor-1] != InputArray2.array[j-1])) {
 				//Ä¿¼­ µÎ °³ È¹µæ. Å½»ö ÇÔ¼ö È£Ãâ
+//				printf("(alpha_searchMain)method call compareString 2\n"); //debug
+//				printf(" "); //debug
 				Substring nowString = alpha_count(&InputArray2, cursor, j);
 				
 				if(compareString(&nowString, &string2)) {
