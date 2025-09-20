@@ -30,3 +30,8 @@ case length(a)==length(b):
 	c = beta
 	d = beta
 		string aspect: ~alpha~alpha~, ~beta~beta~
+
+workflow
+
+in alpha searching :
+	gamma based beta search
