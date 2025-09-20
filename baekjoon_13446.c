@@ -134,23 +134,29 @@ Substring alpha_searchMain() {
 
 Substring beta_count(int Cursor1, int Cursor2, int CursorGap) {
 	int maxLength;
-	//
+	
 	for(maxLength=1; ;maxLength++) {
 		if (
 		!( Cursor1+CursorGap+maxLength < InputArray1.length ) || 
-		!( Cursor2+CursorGap+maxLength < InputArray2.length ) ||
+		!( Cursor2+CursorGap+maxLength < InputArray2.length ) || 
+		!( maxLength < CursorGap-1 ) ||
 		 !( InputArray1.array[Cursor1+maxLength] == InputArray1.array[Cursor1+CursorGap+maxLength] ) ||
 		 !( InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+maxLength] ) ||
 		 !( InputArray1.array[Cursor1+maxLength] == InputArray2.array[Cursor2+CursorGap+maxLength]) ) {
 			break;
 		}
-		//debug
+
+//		debug
 //		if (!(Cursor1+CursorGap+maxLength < InputArray1.length)) {
 //			printf("case 1\n");
 //			break;
 //		}
 //		if (!(Cursor2+CursorGap+maxLength < InputArray2.length)) {
 //			printf("case 2\n");
+//			break;
+//		}
+//		if (!( maxLength < CursorGap-1 )) {
+//			printf("case2.5\n");
 //			break;
 //		}
 //		if (!(InputArray1.array[Cursor1+maxLength] == InputArray1.array[Cursor1+CursorGap+maxLength])) {
@@ -173,10 +179,12 @@ Substring beta_count(int Cursor1, int Cursor2, int CursorGap) {
 	int i;
 	Substring result = {NULL, 0, 0};
 	for(i=0;i<CursorGap-maxLength;i++) {
-		if(InputArray1.array[Cursor1+i+1] != InputArray2.array[Cursor2+i+1]) {
+		if(InputArray1.array[Cursor1+maxLength+i] != InputArray2.array[Cursor2+maxLength+i]) {
+//			printf("return\n"); //debug
 			return result;
 		}
 	}
+//	printf("(beta_count)method %02d:%02d %02d:%02d | %d\n", Cursor1, Cursor1+CursorGap, Cursor2, Cursor2+CursorGap, maxLength); //debug
 	
 	result.target = &STANDARD_ARRAY;
 	result.cursor = Cursor1;
@@ -225,7 +233,7 @@ int main(void) {
 	char array1[47] = {};
 	char array2[47] = {};
 	
-	scanf("%47s %47s",array1,array2);
+	scanf("%s %s",array1,array2);
 	
 	InputArray1.array = array1;
 	InputArray2.array = array2;
@@ -236,8 +244,8 @@ int main(void) {
 	
 	for(i=0;InputArray2.array[i];i++);
 	InputArray2.length = i;
-	
 	start = clock();
+	
 	//main method block
 	
 	Substring a = alpha_searchMain();
@@ -247,9 +255,11 @@ int main(void) {
 	if (a.target != NULL && b.target != NULL) {
 		if (compareString(&a, &b)) {
 			resultString = a;
+//			printf("alpha\n"); //debug
 		}
 		else {
 			resultString = b;
+//			printf("beta\n"); //debug
 		}
 		
 //		printf("top length : %d\n", resultString.length);//debug
@@ -259,7 +269,7 @@ int main(void) {
 		}
 	}
 	else {
-		printf("-1\n");
+		printf("-1");
 	}
 	
 	
