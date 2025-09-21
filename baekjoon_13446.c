@@ -52,8 +52,16 @@ int compareString(Substring* String, Substring* ProtoString) {
 }
 
 
-Substring searchBeta(); //구현 필요 
-
+Substring* searchBeta_BGB(CharArrayWrapper TargetArray, int Cursor1, int Cursor2, int Length, CharArrayWrapper Array2) {
+ //구현 필요 
+ 	int gap = Cursor2 - Cursor1;
+ 	int gammaCursor = TargetArray->array[Cursor1+length];
+ 	
+	int i;
+	for(i=0;i<gap-1;i++) {
+		
+	}
+}
 
 Cursors searchEqualSubstring(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
 	int i,j,k;
@@ -71,16 +79,14 @@ Cursors searchEqualSubstring(CharArrayWrapper* TargetArray, CharArrayWrapper* Ar
 				 j+alphaLength < TargetArray->length && 
 				 i+alphaLength < j && 
 				 TargetArray->array[i+alphaLength] == TargetArray->array[j+alphaLength];alphaLength++);
-				 //문자 index를 cursors 구조체로 만들어 관리 
-				 Cursors cursors = {TargetArray, i, j, alphaLength, j-i};
 				 
-			//gamma 탐색 / 탐색된 gamma 기반 beta 탐색
+				//문자 index를 cursors 구조체로 만들어 관리 
+				Cursors cursors = {TargetArray, i, j, alphaLength, j-i};
+				 
+				//gamma 탐색 / 탐색된 gamma 기반 beta 탐색
+				
 				//~ alpha-gamma ~ alpha ~ case
-				int gammaLength;
-				for(gammaLength=1;i+alphaLength+gammaLength-1<j;gammaLength++) {
-					searchBeta(TargetArray, Array2, ; // 구현 후 수정 필요 
-					
-				}
+				searchBetaBGB(&cursors, Array2);
 			}
 		}
 	}
