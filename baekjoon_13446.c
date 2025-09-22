@@ -57,13 +57,20 @@ int compareString(Substring* String, Substring* ProtoString) {
 
 //notice! return type is dynamically allocated array
 GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array2) { //반환 배열 구성 : gamma beta 순
+	printf("(searchBeta_BGB)method entring Cursors front:rear %d:%d\n", Cursors->front, Cursors->rear);
  	GammaBetaWrapper result;
  	
  	result.gamma.target = NULL;
  	result.beta.target = NULL;
- 
- 	int gammaCursor = Cursors->front+Cursors->length;
+	
+	Substring gamma;
+	gamma.target = Cursors->target;
+	gamma.cursor = Cursors->front+Cursors->length;
+	gamma.length = -1;
+// 	int gammaCursor = Cursors->front+Cursors->length;
  	CharArrayWrapper* Array1 = Cursors->target;
+ 	
+ 	printf("gamma.cursor : %d (Cursor->length : %d)\n", gamma.cursor, Cursors->length);
  	
  	if (Cursors->gap < 2) { //alpha-alpha case 		
  		return result;
@@ -71,76 +78,81 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 	 
 	int i,j,k;
 	for(i=1;i<Array2->length-1;i++) {
-		if (Array2->array[i] == Array1->array[gammaCursor]) {
+		printf("%c(%d):%c(%d)\n", Array2->array[i],i, gamma.target->array[gamma.cursor],gamma.cursor);
+		if (Array2->array[i] == gamma.target->array[gamma.cursor]) {
 			for(j=1; ;j++) {
 				if (
 				 !(i+j < Array2->length-1) ||
 				 !(Cursors->length+j < Cursors->gap) || 
-				 !(Cursors->target->array[gammaCursor+j] == Array2->array[i+j]) )
+				 !(gamma.target->array[gamma.cursor+j] == Array2->array[i+j]) )
 					break;
 			}
-			int topGammaLength = j;
+			gamma.length = j;
+			int array2GammaCursor = i;
 			
-			int betaCursor = gammaCursor + topGammaLength;
+			printf("tGL : %d\n",j);
 			
-			int topBetaCursor = -1;
-			int topBetaLength = -1;
+			Substring topBeta = {Array2, -1, -1};
 			
-			for(j=0;j<gammaCursor;j++) {//gamma가 최대 길이일 때 beta 검색 시도 
+			for(j=0;j<array2GammaCursor;j++) {//gamma가 최대 길이일 때 beta 검색 시도 
 				k = 0;
+				int nowBetaCursor = array2GammaCursor + gamma.length;
 				
-				if(Array2->array[j] == Array2->array[betaCursor]) {
+				if(Array2->array[j] == Array2->array[nowBetaCursor]) {
 					for(k=1; ;k++) {
 						if (
-						 !(j+k < gammaCursor) || 
-						 !(Array2->array[j+k] == Array2->array[betaCursor+k]) )
+						 !(j+k < array2GammaCursor) || 
+						 !(Array2->array[j+k] == Array2->array[nowBetaCursor+k]) )
 							break;
 					}
 				}
 				
-				if(k > topBetaLength) {
-					topBetaCursor = j;
-					topBetaLength = k;
+				Substring nowBeta = {Array2, j, k};
+				
+				if(compareString(&nowBeta, &topBeta)) {
+					topBeta = nowBeta;
 				}
+				
 				j += k; //마법의 최적화 로직 
 			}
 			
-			if (topBetaLength > 0) { //최대 길이 gamma에서 beta 검색 성공
-				Substring gamma = {Array2, gammaCursor, topGammaLength};
-				Substring beta = {Array2, topBetaCursor, topBetaLength};
+			if (topBeta.length > 0) { //최대 길이 gamma에서 beta 검색 성공
+				printf("topBeta.length > 0 (%d)\n", topBeta.length);
 				
 				result.gamma = gamma;
-				result.beta = beta;
+				result.beta = topBeta;
 				
 				return result;
 			}
 			
-			for(j=1;topGammaLength-j>0;j++) {//gamma 길이 1씩 줄이며 beta 탐색 시도 
-				int nowBetaCursor = gammaCursor + topGammaLength - j;
+			for(j=1;gamma.length-j>0;j++) {//gamma 길이 1씩 줄이며 beta 탐색 시도 
+				int nowBetaCursor = array2GammaCursor + gamma.length - j;
 				
-				for(k=0;k<gammaCursor;k++) {
+				for(k=0;k<array2GammaCursor;k++) {
 					if(Array2->array[k] == Array2->array[nowBetaCursor]) {
-						Substring gamma = {Array2, gammaCursor, topGammaLength-j};
-						Substring beta = {Array2, k, 1};
+						Substring resultGamma = {Array2, array2GammaCursor, gamma.length-j};
+						Substring resultBeta = {Array2, nowBetaCursor, 1};
 						
-						result.gamma = gamma;
-						result.beta = beta;
+						printf("(search_BGB)method gamma info | cursror : %d, length : %d\n", array2GammaCursor, resultGamma.length);
+						result.gamma = resultGamma;
+						result.beta = resultBeta;
 						
 						return result;
 					}
 				}
 			}
-			//탐색 실패로 for문 탈출 시 무효의 result 반환 
-			return result;
 		}
 	}
+	//탐색 실패로 for문 탈출 시 무효의 result 반환 
+	return result;
 }
 
-CursorsWrapper search_AGA(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
-	int i,j,k;
-	Substring topString = {TargetArray, -1, -1};
-	CursorsWrapper topCursors = {NULL};
+CharArrayWrapper search_AGA(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
+	int topLength = -1;
+	CursorsWrapper topAlphaInfo;
+	GammaBetaWrapper topGammaBetaInfo;
 	
+	int i,j,k;
 	for(i=0;i<TargetArray->length-1;i++) {
 		for(j=i+1;j<TargetArray->length;j++) {
 			if (
@@ -156,15 +168,43 @@ CursorsWrapper search_AGA(CharArrayWrapper* TargetArray, CharArrayWrapper* Array
 				
 				int alphaLength = k;
 				
-				CursorsWrapper cursors = {TargetArray, i, j, alphaLength, j-i};
+				CursorsWrapper alphaCursors = {TargetArray, i, j, alphaLength, j-i};
+				
 				//gamma beta search		
 				//~ alpha-gamma ~ alpha ~ case
-				GammaBetaWrapper a = searchBeta_BGB(&cursors, Array2);
-				printf("gamma : %d(%c) %d, beta: %d(%c) %d\n", a.gamma.cursor, a.gamma.target->array[a.gamma.cursor], a.beta.cursor, a.beta.target->array[a.beta.cursor]);
+				GammaBetaWrapper nowGammaBeta = searchBeta_BGB(&alphaCursors, Array2);
+				
+				if (nowGammaBeta.gamma.target != NULL) {
+					printf(" GAMMA : %d(%c) l : %d \n alpha : %d(%c) l : %d \n beta: %d(%c) l : %d\n", 
+					nowGammaBeta.gamma.cursor, nowGammaBeta.gamma.target->array[nowGammaBeta.gamma.cursor], nowGammaBeta.gamma.length, 
+					alphaCursors.front, alphaCursors.target->array[alphaCursors.front], alphaCursors.length,
+					nowGammaBeta.beta.cursor, nowGammaBeta.beta.target->array[nowGammaBeta.beta.cursor], nowGammaBeta.beta.length);
+					
+					if (alphaCursors.length + nowGammaBeta.gamma.length + nowGammaBeta.beta.length > topLength) {
+						topLength = alphaCursors.length + nowGammaBeta.gamma.length + nowGammaBeta.beta.length;
+						topAlphaInfo = alphaCursors;
+						topGammaBetaInfo = nowGammaBeta;
+					}
+				}
 			}
 		}
 	}
-	return topCursors;
+	
+	CharArrayWrapper result = {NULL};
+	
+	if (topLength > 0) {
+		char* arr = (char*)malloc(sizeof(char) * topLength);
+		result.array = arr;
+		result.length = topLength;
+		for(i=0;i<topAlphaInfo.length+topGammaBetaInfo.gamma.length;i++) {
+			result.array[i] = topAlphaInfo.target->array[topAlphaInfo.front+i];
+		}
+		for(i=0;i<topGammaBetaInfo.beta.length;i++) {
+			result.array[topAlphaInfo.length+topGammaBetaInfo.gamma.length+i] = topGammaBetaInfo.beta.target->array[topGammaBetaInfo.beta.cursor+i];
+		}
+	}
+	
+	return result;
 }
 
 
@@ -188,11 +228,18 @@ int main(void) {
 	start = clock();
 	
 	//main method block
-	search_AGA(&InputArray1,&InputArray2);
-	
+	CharArrayWrapper result = search_AGA(&InputArray1,&InputArray2);
+	if (result.array != NULL) {
+		printf("result.length : %d\n",result.length);
+		for(i=0;i<result.length;i++) {
+			printf("%c", result.array[i]);
+		}
+		free(result.array);
+	}
 
 	
 	finish = clock();
+	
 //	printf("\n\n");
 	
 	//debug
