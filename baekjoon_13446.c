@@ -33,7 +33,6 @@ CharArrayWrapper InputArray2;
 
 
 Substring stringMerge(Substring* F, Substring* R) {
-	printf("in (stringMerge)method\n");
 	char* array = (char*)malloc(sizeof(char) * (F->length + R->length));
 	int i;
 	for(i=0;i<F->length;i++) {
@@ -43,10 +42,11 @@ Substring stringMerge(Substring* F, Substring* R) {
 		array[F->length+i] = R->target->array[R->cursor+i];
 	}
 	
-	CharArrayWrapper wrapper = {array, F->length+R->length};
-	Substring result = {&wrapper, 0, wrapper.length};
+	CharArrayWrapper* target = (CharArrayWrapper*)malloc(sizeof(CharArrayWrapper));
+	target->array = array;
+	target->length = F->length+R->length;
 	
-	printf("return (stringMerge)method\n");
+	Substring result = {target, 0, target->length};
 	return result;
 }
 int compareString(Substring* String, Substring* ProtoString) {
@@ -73,9 +73,37 @@ int compareString(Substring* String, Substring* ProtoString) {
 
 
 
+
+GammaBetaWrapper searchBeta_BB(CharArrayWrapper* Array2) {
+	GammaBetaWrapper top = {{NULL, 0, 0}, {NULL, 0, 0}};
+	
+	int i,j,k;
+	for(i=0;i<Array2->length-1;i++) {
+		for(j=i+1;j<Array2->length;j++) {
+			if (Array2->array[i] == Array2->array[j] && Array2->array[i-1] != Array2->array[j-1]) {
+				for(k=1; ;k++) {
+					if (
+					!(j+k < Array2->length) ||
+					!(i+k < j) ||
+					!(Array2->array[i+k] == Array2->array[j+k]))
+						break;
+				}
+				
+				Substring nowBeta = {Array2, i, j};
+				
+				if (compareString(&top.beta, &nowBeta)) {
+					top.beta = nowBeta;
+				}
+			}
+		}
+	}
+	
+	return top;
+}
+
 //notice! return type is dynamically allocated array
 GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array2) { //반환 배열 구성 : gamma beta 순
-	printf("(searchBeta_BGB)method entring Cursors front:rear %d:%d\n", Cursors->front, Cursors->rear);
+//	printf("(searchBeta_BGB)method entring Cursors front:rear %d:%d\n", Cursors->front, Cursors->rear);
 	GammaBetaWrapper top = {{NULL, 0, 0}, {NULL, 0, 0}};
 
 	Substring array1Gamma;
@@ -85,17 +113,17 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 
  	CharArrayWrapper* Array1 = Cursors->target;
  	
- 	printf("gamma.cursor : %d (Cursor->length : %d)\n", array1Gamma.cursor, Cursors->length);
+// 	printf("gamma.cursor : %d (Cursor->length : %d)\n", array1Gamma.cursor, Cursors->length);
  	
  	if (Cursors->gap < 2) { //alpha-alpha case
  		return top;
 	}
 	
 	
-	printf("\n");
+//	printf("\n");
 	int i,j,k;
 	for(i=1;i<Array2->length-1;i++) {
-		printf("%c(%d):%c(%d)\n", Array2->array[i],i, array1Gamma.target->array[array1Gamma.cursor],array1Gamma.cursor);
+//		printf("%c(%d):%c(%d)\n", Array2->array[i],i, array1Gamma.target->array[array1Gamma.cursor],array1Gamma.cursor);
 		if (Array2->array[i] == array1Gamma.target->array[array1Gamma.cursor]) {
 			for(j=1; ;j++) {
 				if (
@@ -105,15 +133,14 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 					break;
 			}
 			
-			printf("  tGL : %d\n",j);
+//			printf("  tGL : %d\n",j);
 			
 			Substring nowGamma = {Array2, i, j};
 			Substring nowBeta = {Array2, 0, 0};
 			
-			for(j=0;j<nowGamma.length;j++) {//gamma가 최대 길이일 때 beta 검색 시도 
+			for(j=0;j<nowGamma.cursor;j++) {//gamma가 최대 길이일 때 beta 검색 시도 
 				k = 0;
 				int nowBetaCursor = nowGamma.cursor + nowGamma.length;
-				
 				if(Array2->array[j] == Array2->array[nowBetaCursor]) {
 					for(k=1; ;k++) {
 						if (
@@ -122,7 +149,6 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 							break;
 					}
 				}
-				
 				nowBeta.cursor = j;
 				nowBeta.length = k;
 				
@@ -141,7 +167,10 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 						top.beta = nowBeta;
 					}
 					free(nowBetaGamma.target->array);
+					free(nowBetaGamma.target);
+					
 					free(topBetaGamma.target->array);
+					free(topBetaGamma.target);
 				}
 				
 				j += k; //마법의 최적화 로직 
@@ -177,7 +206,10 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 									top.beta = nowBeta;
 								}
 								free(nowBetaGamma.target->array);
+								free(nowBetaGamma.target);
+								
 								free(topBetaGamma.target->array);
+								free(topBetaGamma.target);
 							}
 							
 							flag = 1;
@@ -197,7 +229,7 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 
 
 GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array2) {
-	printf("(searchBeta_GBB)method entring Cursors front:rear %d:%d\n", Cursors->front, Cursors->rear);
+//	printf("(searchBeta_GBB)method entring Cursors front:rear %d:%d\n", Cursors->front, Cursors->rear);
 	GammaBetaWrapper top = {{NULL, 0, 0}, {NULL, 0, 0}};
 	
 	Substring array1Gamma;
@@ -207,17 +239,17 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 	
 	CharArrayWrapper* Array1 = Cursors->target;
 	
-	printf("gamma.cursor : %d l:%d\n", array1Gamma.cursor, Cursors->length);
+//	printf("gamma.cursor : %d l:%d\n", array1Gamma.cursor, Cursors->length);
 	
 	if (Cursors->rear + Cursors->length >= Cursors->target->length) {
 		return top;
 	}
 	
 	
-	printf("\n");
+//	printf("\n");
 	int i,j,k;
 	for(i=0;i<Array2->length-2;i++) {
-		printf("%c(%d):%c(%d)\n", Array2->array[i],i, array1Gamma.target->array[array1Gamma.cursor],array1Gamma.cursor);
+//		printf("%c(%d):%c(%d)\n", Array2->array[i],i, array1Gamma.target->array[array1Gamma.cursor],array1Gamma.cursor);
 		if (Array2->array[i] == array1Gamma.target->array[array1Gamma.cursor]) {
 			for(j=1; ;j++) {
 				if (
@@ -227,14 +259,15 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 					break;
 			}
 			
-			printf("  tGL : %d\n",j);
+//			printf("  tGL : %d\n",j);
 			
 			Substring nowGamma = {Array2, i, j};
 			Substring nowBeta = {Array2, 0, 0};
 			
-			for(j=nowGamma.cursor+nowGamma.length+1;j<Array2->length-1;j++) {//gamma가 최대 길이일 때 beta 탐색 
+			for(j=nowGamma.cursor+nowGamma.length+1;j<Array2->length;j++) {//gamma가 최대 길이일 때 beta 탐색 
 				k=0;
 				int nowBetaCursor = nowGamma.cursor + nowGamma.length;
+//				printf("%c(%d) %c(%d)\n", Array2->array[nowBetaCursor], nowBetaCursor, Array2->array[j], j);
 				
 				if (Array2->array[j] == Array2->array[nowBetaCursor]) {
 					for(k=1; ;k++) {
@@ -243,7 +276,7 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 						 !(Array2->array[j+k] == Array2->array[nowBetaCursor+k]) )
 							break;
 					}
-					printf("found beta(%c), (%d, %d) l:%d\n", Array2->array[nowBetaCursor], nowBetaCursor, j, k);
+//					printf("found beta(%c), (%d, %d) l:%d\n", Array2->array[nowBetaCursor], nowBetaCursor, j, k);
 				}
 				
 				nowBeta.cursor = j;
@@ -252,7 +285,7 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 				//현재 beta, gamma와 top beta, gamma 비교 
 				if (nowBeta.length > 0 && 
 					nowGamma.length+nowBeta.length > top.gamma.length + top.beta.length) {
-					printf("now gamma,beta length : %d, %d\n", nowGamma.length, nowBeta.length);
+//					printf("now gamma,beta length : %d, %d\n", nowGamma.length, nowBeta.length);
 					top.gamma = nowGamma;
 					top.beta = nowBeta;
 				}
@@ -266,7 +299,10 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 						top.beta = nowBeta;
 					}
 					free(nowBetaGamma.target->array);
+					free(nowBetaGamma.target);
+					
 					free(topBetaGamma.target->array);
+					free(topBetaGamma.target);
 				}
 				
 				j += k;
@@ -302,7 +338,10 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 									top.beta = nowBeta;
 								}
 								free(nowBetaGamma.target->array);
+								free(nowBetaGamma.target);
+								
 								free(topBetaGamma.target->array);
+								free(topBetaGamma.target);
 							}
 							
 							flag = 1;
@@ -319,8 +358,8 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 	return top;
 }
 
-
-void search(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
+//modified
+Substring search(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
 	int topLength = -1;
 	CursorsWrapper topAlphaInfo;
 	GammaBetaWrapper topGammaBetaInfo;
@@ -345,48 +384,39 @@ void search(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
 				
 				//gamma beta search
 				
-				//~ alpha-gamma ~ alpha ~ case
-//				GammaBetaWrapper resultBGB = searchBeta_BGB(&alphaCursors, Array2);
+				GammaBetaWrapper resultArray[3];
 				
-				//~ alpha ~ gamma-alpha ~ case
-				printf("\nalpha : (%d,%d) l:%d\n",i,j,alphaLength);
-				GammaBetaWrapper result = searchBeta_GBB(&alphaCursors, Array2);
-				printf("==result beta : %d, l:%d\n\n", result.beta.cursor, result.beta.length);
+				resultArray[0] = searchBeta_BGB(&alphaCursors, Array2);
+				resultArray[1] = searchBeta_GBB(&alphaCursors, Array2);
+				resultArray[2] = searchBeta_BB(Array2);
 				
-				//legacy code
-//				if (nowGammaBeta.gamma.target != NULL) {
-//					printf(" GAMMA : %d(%c) l : %d \n alpha : %d(%c) l : %d \n beta: %d(%c) l : %d\n", 
-//					nowGammaBeta.gamma.cursor, nowGammaBeta.gamma.target->array[nowGammaBeta.gamma.cursor], nowGammaBeta.gamma.length, 
-//					alphaCursors.front, alphaCursors.target->array[alphaCursors.front], alphaCursors.length,
-//					nowGammaBeta.beta.cursor, nowGammaBeta.beta.target->array[nowGammaBeta.beta.cursor], nowGammaBeta.beta.length);
-//					
-//					if (alphaCursors.length + nowGammaBeta.gamma.length + nowGammaBeta.beta.length > topLength) {
-//						topLength = alphaCursors.length + nowGammaBeta.gamma.length + nowGammaBeta.beta.length;
-//						topAlphaInfo = alphaCursors;
-//						topGammaBetaInfo = nowGammaBeta;
-//					}
-//				}
-//				
-				
+				for(k=0;k<3;k++) {
+					if (resultArray[k].beta.target != NULL) {
+						if (alphaLength+resultArray[k].gamma.length+resultArray[k].beta.length > topLength) {
+							topLength = alphaLength+resultArray[k].gamma.length+resultArray[k].beta.length;
+							
+							topAlphaInfo = alphaCursors;
+							topGammaBetaInfo = resultArray[k];
+						}
+					}
+				}
 			}
 		}
 	}
 	
-	CharArrayWrapper result = {NULL};
-	
 	if (topLength > 0) {
-		char* arr = (char*)malloc(sizeof(char) * topLength);
-		result.array = arr;
-		result.length = topLength;
-		for(i=0;i<topAlphaInfo.length+topGammaBetaInfo.gamma.length;i++) {
-			result.array[i] = topAlphaInfo.target->array[topAlphaInfo.front+i];
-		}
-		for(i=0;i<topGammaBetaInfo.beta.length;i++) {
-			result.array[topAlphaInfo.length+topGammaBetaInfo.gamma.length+i] = topGammaBetaInfo.beta.target->array[topGammaBetaInfo.beta.cursor+i];
-		}
+		Substring alpha = {TargetArray, topAlphaInfo.front, topAlphaInfo.length};
+		Substring gammaBeta = stringMerge(&topGammaBetaInfo.gamma, &topGammaBetaInfo.beta);
+		Substring result = stringMerge(&alpha, &gammaBeta);
+		
+		free(gammaBeta.target->array);
+		free(gammaBeta.target);
+		
+		return result;
 	}
 	
-//	return result;
+	Substring result = {NULL, 0, 0};
+	return result;
 }
 
 
@@ -410,23 +440,27 @@ int main(void) {
 	start = clock();
 	
 	//main method block
-	search(&InputArray1,&InputArray2);
-//	if (result.array != NULL) {
-//		printf("result.length : %d\n",result.length);
-//		for(i=0;i<result.length;i++) {
-//			printf("%c", result.array[i]);
-//		}
-//		free(result.array);
-//	}
-
+	Substring result = search(&InputArray1,&InputArray2);
+	if (result.target != NULL) {
+		for(i=0;i<result.length;i++) {
+			printf("%c", result.target->array[i]);
+		}
+		printf("");
+		free(result.target->array);
+		free(result.target);
+	}
+	
+	else {
+		printf("-1");
+	}
 	
 	finish = clock();
 	
 //	printf("\n\n");
-	
-	//debug
-	printf("\n");
-	printf("시작 시간: %6ld(ms)\n", start);
-	printf("종료 시간: %6ld(ms)\n", finish);
-	printf("소요 시간: %6ld(ms)\n", finish - start); 
+//	
+//	//debug
+//	printf("\n");
+//	printf("시작 시간: %6ld(ms)\n", start);
+//	printf("종료 시간: %6ld(ms)\n", finish);
+//	printf("소요 시간: %6ld(ms)\n", finish - start); 
 }
