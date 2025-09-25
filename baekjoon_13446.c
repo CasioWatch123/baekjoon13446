@@ -57,7 +57,7 @@ int compareString(Substring* String, Substring* ProtoString) {
 	}
 	else if(String->target != NULL && String->length == ProtoString->length) {
 		int i;
-		for(i=1;i<String->length;i++) {
+		for(i=0;i<String->length;i++) {
 			if (String->target->array[String->cursor+i] < ProtoString->target->array[ProtoString->cursor+i]) {
 //				printf("(compareString)method, return type 2\n"); //debug
 				return 1;
@@ -81,7 +81,7 @@ GammaBetaWrapper searchBeta_BB(CharArrayWrapper* Array2) {
 	int i,j,k;
 	for(i=0;i<Array2->length-1;i++) {
 		for(j=i+1;j<Array2->length;j++) {
-			if (Array2->array[i] == Array2->array[j] && Array2->array[i-1] != Array2->array[j-1]) {
+			if (Array2->array[i] == Array2->array[j] && (i == 0 || Array2->array[i-1] != Array2->array[j-1])) {
 				for(k=1; ;k++) {
 					if (
 					!(j+k < Array2->length) ||
@@ -114,7 +114,7 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
  	
 // 	printf("gamma.cursor : %d (Cursor->length : %d)\n", array1Gamma.cursor, Cursors->length);
  	
- 	if (Cursors->gap < 2) { //alpha-alpha case
+ 	if (Cursors->gap-Cursors->length < 1) { //alpha-alpha case
  		return top;
 	}
 	
@@ -387,7 +387,7 @@ Substring search(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
 				resultArray[2] = searchBeta_BB(Array2);
 				
 				for(k=0;k<3;k++) {
-					if (resultArray[k].beta.length > 0) {
+					if (resultArray[k].beta.length > 0) { //길이가 같을 때 사전 순 검색 로직 포함 필요 
 						if (alphaLength+resultArray[k].gamma.length+resultArray[k].beta.length > topLength) {
 							topLength = alphaLength+resultArray[k].gamma.length+resultArray[k].beta.length;
 							
@@ -396,6 +396,30 @@ Substring search(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
 //							printf("k:%d\n", k);
 //							printf("Alpha Info : %d-l%d %d\n", alphaCursors.front, alphaCursors.length, alphaCursors.rear);
 //							printf("GammaBeta Info : %d-l%d %d-l%d\n", topGammaBetaInfo.gamma.cursor, topGammaBetaInfo.gamma.length, topGammaBetaInfo.beta.cursor,topGammaBetaInfo.beta.length);
+						}
+						else if (alphaLength+resultArray[k].gamma.length+resultArray[k].beta.length == topLength) {
+							Substring nowAlpha = {alphaCursors.target, alphaCursors.front, alphaCursors.length};
+							Substring nowGammaBeta = stringMerge(&resultArray[k].gamma, &resultArray[k].beta);
+							Substring nowString = stringMerge(&nowAlpha, &nowGammaBeta);
+							
+							Substring topAlpha = {topAlphaInfo.target, topAlphaInfo.front, topAlphaInfo.length};
+							Substring topGammaBeta = stringMerge(&topGammaBetaInfo.gamma, &topGammaBetaInfo.beta);
+							Substring topString = stringMerge(&topAlpha, &topGammaBeta);
+							
+							if (compareString(&nowString, &topString)) {
+								topAlphaInfo = alphaCursors;
+								topGammaBetaInfo = resultArray[k];
+							}
+							
+							free(nowGammaBeta.target->array);
+							free(nowGammaBeta.target);
+							free(nowString.target->array);
+							free(nowString.target);
+							
+							free(topGammaBeta.target->array);
+							free(topGammaBeta.target);
+							free(topString.target->array);
+							free(topString.target);
 						}
 					}
 				}
