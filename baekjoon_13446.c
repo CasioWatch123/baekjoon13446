@@ -147,37 +147,37 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 						 !(Array2->array[j+k] == Array2->array[nowBetaCursor+k]) )
 							break;
 					}
-				}
-				nowBeta.cursor = j;
-				nowBeta.length = k;
-				
-				//현재 beta, gamma와 top beta, gamma 비교 
-				if (nowGamma.length+nowBeta.length > top.gamma.length + top.beta.length) {
-					top.gamma = nowGamma;
-					top.beta = nowBeta;
-				}
-				else if (nowBeta.length > 0 && 
-						 nowGamma.length+nowBeta.length == top.gamma.length + top.beta.length) {
-					Substring nowBetaGamma = stringMerge(&nowBeta, &nowGamma);
-					Substring topBetaGamma = stringMerge(&top.beta,&top.gamma);
+					nowBeta.cursor = j;
+					nowBeta.length = k;
 					
-					if (compareString(&nowBetaGamma, &topBetaGamma)) {
+					//현재 beta, gamma와 top beta, gamma 비교 
+					if (nowGamma.length+nowBeta.length > top.gamma.length + top.beta.length) {
 						top.gamma = nowGamma;
 						top.beta = nowBeta;
 					}
-					free(nowBetaGamma.target->array);
-					free(nowBetaGamma.target);
+					else if (nowBeta.length > 0 && 
+							 nowGamma.length+nowBeta.length == top.gamma.length + top.beta.length) {
+						Substring nowBetaGamma = stringMerge(&nowBeta, &nowGamma);
+						Substring topBetaGamma = stringMerge(&top.beta,&top.gamma);
+						
+						if (compareString(&nowBetaGamma, &topBetaGamma)) {
+							top.gamma = nowGamma;
+							top.beta = nowBeta;
+						}
+						free(nowBetaGamma.target->array);
+						free(nowBetaGamma.target);
+						
+						free(topBetaGamma.target->array);
+						free(topBetaGamma.target);
+					}
 					
-					free(topBetaGamma.target->array);
-					free(topBetaGamma.target);
+					j += k; //마법의 최적화 로직 
 				}
-				
-				j += k; //마법의 최적화 로직 
 			}
 			
 			
 			//최대 길이 gamma서 beta 검색 실패 시 gamma 길이 줄이며 검색 
-			if (nowBeta.length == 0) { 
+			if (top.beta.length == 0) { 
 				for(j=1;nowGamma.length-j>0;j++) {
 					int flag = 0;
 					
@@ -190,32 +190,10 @@ GammaBetaWrapper searchBeta_BGB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 							nowBeta.cursor = k;
 							nowBeta.length = 1;
 							
+							top.gamma = nowGamma;
+							top.beta = nowBeta;
 							
-							if (nowGamma.length+nowBeta.length > top.gamma.length + top.beta.length) {
-								top.gamma = nowGamma;
-								top.beta = nowBeta;
-							}
-							else if (nowBeta.length > 0 && 
-									 nowGamma.length+nowBeta.length == top.gamma.length + top.beta.length) {
-								Substring nowBetaGamma = stringMerge(&nowBeta, &nowGamma);
-								Substring topBetaGamma = stringMerge(&top.beta,&top.gamma);
-								
-								if (compareString(&nowBetaGamma, &topBetaGamma)) {
-									top.gamma = nowGamma;
-									top.beta = nowBeta;
-								}
-								free(nowBetaGamma.target->array);
-								free(nowBetaGamma.target);
-								
-								free(topBetaGamma.target->array);
-								free(topBetaGamma.target);
-							}
-							
-							flag = 1;
-							break;
-						}
-						if (flag) {
-							break;
+							return top;
 						}
 					}
 				}
@@ -262,7 +240,7 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 			Substring nowBeta = {Array2, 0, 0};
 			int nowBetaCursor = nowGamma.cursor + nowGamma.length;
 			
-			for(j=nowGamma.cursor+nowGamma.length+1;j<Array2->length;j++) {//gamma가 최대 길이일 때 beta 탐색 
+			for(j=nowBetaCursor+1;j<Array2->length;j++) {//gamma가 최대 길이일 때 beta 탐색 
 				k=0;
 				if (Array2->array[j] == Array2->array[nowBetaCursor]) {
 					for(k=1; ;k++) {
@@ -271,41 +249,39 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 						 !(Array2->array[j+k] == Array2->array[nowBetaCursor+k]) )
 							break;
 					}
-//					printf("found beta(%c), (%d, %d) l:%d\n", Array2->array[nowBetaCursor], nowBetaCursor, j, k);
-				}
-				
-				nowBeta.cursor = j;
-				nowBeta.length = k;
-				
-				//현재 beta, gamma와 top beta, gamma 비교 
-				if (nowBeta.length > 0 && 
-					nowGamma.length+nowBeta.length > top.gamma.length + top.beta.length) {
-//					printf("now gamma,beta length : %d, %d\n", nowGamma.length, nowBeta.length);
-					top.gamma = nowGamma;
-					top.beta = nowBeta;
-				}
-				else if (nowBeta.length > 0 && 
-						 nowGamma.length+nowBeta.length == top.gamma.length + top.beta.length) {
-					Substring nowBetaGamma = stringMerge(&nowBeta, &nowGamma);
-					Substring topBetaGamma = stringMerge(&top.beta,&top.gamma);
+					nowBeta.cursor = j;
+					nowBeta.length = k;
 					
-					if (compareString(&nowBetaGamma, &topBetaGamma)) {
+					//현재 beta, gamma와 top beta, gamma 비교 
+					if (nowBeta.length > 0 && 
+						nowGamma.length+nowBeta.length > top.gamma.length + top.beta.length) {
+	//					printf("now gamma,beta length : %d, %d\n", nowGamma.length, nowBeta.length);
 						top.gamma = nowGamma;
 						top.beta = nowBeta;
 					}
-					free(nowBetaGamma.target->array);
-					free(nowBetaGamma.target);
+					else if (nowBeta.length > 0 && 
+							 nowGamma.length+nowBeta.length == top.gamma.length + top.beta.length) {
+						Substring nowBetaGamma = stringMerge(&nowBeta, &nowGamma);
+						Substring topBetaGamma = stringMerge(&top.beta,&top.gamma);
+						
+						if (compareString(&nowBetaGamma, &topBetaGamma)) {
+							top.gamma = nowGamma;
+							top.beta = nowBeta;
+						}
+						free(nowBetaGamma.target->array);
+						free(nowBetaGamma.target);
+						
+						free(topBetaGamma.target->array);
+						free(topBetaGamma.target);
+					}
 					
-					free(topBetaGamma.target->array);
-					free(topBetaGamma.target);
+					j += k;
 				}
-				
-				j += k;
 			}
 			
 			
 			//최대 길이 gamma서 beta 검색 실패 시 gamma 길이 줄이며 검색 
-			if (nowBeta.length == 0) {
+			if (top.beta.length == 0) {
 				for(j=1;nowGamma.length-j>0;j++) {
 					int flag = 0;
 					
@@ -318,32 +294,10 @@ GammaBetaWrapper searchBeta_GBB(CursorsWrapper* Cursors, CharArrayWrapper* Array
 							nowBeta.cursor = k;
 							nowBeta.length = 1;
 							
+							top.gamma = nowGamma;
+							top.beta = nowBeta;
 							
-							if (nowGamma.length+nowBeta.length > top.gamma.length + top.beta.length) {
-								top.gamma = nowGamma;
-								top.beta = nowBeta;
-							}
-							else if (nowBeta.length > 0 && 
-									 nowGamma.length+nowBeta.length == top.gamma.length + top.beta.length) {
-								Substring nowBetaGamma = stringMerge(&nowBeta, &nowGamma);
-								Substring topBetaGamma = stringMerge(&top.beta,&top.gamma);
-								
-								if (compareString(&nowBetaGamma, &topBetaGamma)) {
-									top.gamma = nowGamma;
-									top.beta = nowBeta;
-								}
-								free(nowBetaGamma.target->array);
-								free(nowBetaGamma.target);
-								
-								free(topBetaGamma.target->array);
-								free(topBetaGamma.target);
-							}
-							
-							flag = 1;
-							break;
-						}
-						if(flag) {
-							break;
+							return top;
 						}
 					}
 				}
@@ -387,7 +341,7 @@ Substring search(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
 				resultArray[2] = searchBeta_BB(Array2);
 				
 				for(k=0;k<3;k++) {
-					if (resultArray[k].beta.length > 0) { //길이가 같을 때 사전 순 검색 로직 포함 필요 
+					if (resultArray[k].beta.length > 0) {
 						if (alphaLength+resultArray[k].gamma.length+resultArray[k].beta.length > topLength) {
 							topLength = alphaLength+resultArray[k].gamma.length+resultArray[k].beta.length;
 							
@@ -447,8 +401,8 @@ Substring search(CharArrayWrapper* TargetArray, CharArrayWrapper* Array2) {
 int main(void) {
 	long start, finish;
 
-	char array1[47] = {};
-	char array2[47] = {};
+	char array1[48] = {};
+	char array2[48] = {};
 	
 	scanf("%s %s",array1,array2);
 	
